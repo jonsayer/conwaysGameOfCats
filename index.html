@@ -6,8 +6,6 @@
 <script>
 
 // to do
-// wrap around logic: edge cells have neighbors on the other side of the board
-// mousedown to change states
 // initial state generator
 // play button
 
@@ -23,8 +21,8 @@ var mouseX;
 var mouseY;
 var mouseDown = false;
 
-var xL = ($( window ).width() / cellWidth);
-var yL = ($( window ).height() / cellWidth);
+var xL = ($( window ).width() / cellWidth)-2;
+var yL = ($( window ).height() / cellWidth)-2;
 
 // start and run the simulation
 $( document ).ready(function() {
@@ -95,11 +93,12 @@ function cellLiveDie(x,y,localPlayArea){
     var neighbors = 0;
     var i = x-1;
     while(i<=x+1){
+        var tempI = wrapAround(i, localPlayArea.length-1 );
         var j = y-1;
         while(j<=y+1){
-            if(i>=0 && j>=0 && i < localPlayArea.length && j < localPlayArea[x].length ){
-                neighbors = neighbors + localPlayArea[i][j];
-            }
+            var tempJ = wrapAround(j, localPlayArea[x].length-1 );
+            //console.log("tempI: "+tempI+" tempJ:"+tempJ+"max x: "+localPlayArea.length+" max y: "+localPlayArea[x].length);
+            neighbors = neighbors + localPlayArea[tempI][tempJ];
             j++
         }
         i++
@@ -112,6 +111,17 @@ function cellLiveDie(x,y,localPlayArea){
     } else {
         // cell is dead in next generation
         return 0;
+    }
+}
+
+// logic for wrapping the detection logic around the play area
+function wrapAround(value,max){
+    if(value < 0){
+        return max;
+    } else if(value > max){
+        return 0;
+    } else {
+        return value;
     }
 }
 
@@ -153,7 +163,6 @@ function placeLife(x,y,width){
 }
 
 function kittyFace(){
-    //return '🟢';
     var id = Math.floor(Math.random()*5);
     switch (id) {
         case 1:
@@ -180,7 +189,6 @@ function kittyFace(){
     }
 
     .life {
-        /*background-color: green;*/
         position:absolute;
     }
 
