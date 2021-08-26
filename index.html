@@ -1,0 +1,195 @@
+<html>
+<head>
+
+<script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+
+<script>
+
+// to do
+// wrap around logic: edge cells have neighbors on the other side of the board
+// mousedown to change states
+// initial state generator
+// play button
+
+
+
+var cellWidth   = 16;
+var fps         = 0.5;
+
+var frame = Math.floor(1000/fps);
+var playArea = [];
+var genNum = 0;
+var mouseX;
+var mouseY;
+var mouseDown = false;
+
+var xL = ($( window ).width() / cellWidth);
+var yL = ($( window ).height() / cellWidth);
+
+// start and run the simulation
+$( document ).ready(function() {
+    initPlayArea(xL,yL);
+    setInterval( generation , frame);
+    setInterval( mouseAction, 10);
+});
+
+// detect screen dimensions and generate the cells randomly
+function initPlayArea(x,y){
+    console.log("Begin simulation");
+
+    for(var i = 0; i < x; i++){
+        var column = [];
+        for(var j = 0; j < y; j++){
+            column.push(  Math.round(  Math.random()  )  );
+            console.log( "x:"+i+" y:"+j+"val="+column[j]  );
+        }
+        playArea.push(column);
+    }
+}
+
+// functions for detecting mouse down and mouse location
+var mouseInterval;
+var priorPoint = [0,0];
+$(document).mousedown(function(event) {
+    event.preventDefault();
+    mouseDown = true;
+}).mouseup(function() {
+    mouseDown = false;
+});
+$(document).mousemove(function(event){
+    event.preventDefault();
+    mouseX = event.pageX;
+    mouseY = event.pageY;
+});
+
+// this runs in a loop and acts as mouse controls. 
+function mouseAction(){
+    if(mouseDown){
+        switchCell(mouseX, mouseY);
+    }
+}
+
+//switch cell from mouse click coordinates
+function switchCell(targetX,targetY) {
+    var x = Math.floor(targetX/cellWidth);
+    var y = Math.floor(targetY/cellWidth);
+    if(priorPoint[0] != x && priorPoint[1] != y){
+        priorPoint = [x,y];
+        if(playArea[x][y] == 1){
+            playArea[x][y] = 0;
+            console.log("kill cell "+x+", "+y+". new status: "+playArea[x][y]);
+            $('#cellx'+x+'y'+y).html("❌");
+        } else {
+            console.log("activate cell "+x+", "+y);
+            playArea[x][y] = 1;
+            placeLife(x,y,cellWidth);
+        }
+    } else {
+        console.log("no action, still on last cell")
+    }
+}
+
+// does the cell live or die in the next generation
+function cellLiveDie(x,y,localPlayArea){
+    var status = localPlayArea[x][y];
+    var neighbors = 0;
+    var i = x-1;
+    while(i<=x+1){
+        var j = y-1;
+        while(j<=y+1){
+            if(i>=0 && j>=0 && i < localPlayArea.length && j < localPlayArea[x].length ){
+                neighbors = neighbors + localPlayArea[i][j];
+            }
+            j++
+        }
+        i++
+    }
+    // since above pulls in current cell, subtract its value from neighbors
+    neighbors = neighbors-status;
+    if( (status == 0 && neighbors == 3) || (status == 1 && ( neighbors == 2 || neighbors == 3) ) ){
+        // cell is alive in next generation
+        return 1;
+    } else {
+        // cell is dead in next generation
+        return 0;
+    }
+}
+
+// figure out if all the cells live or die in next generation
+function generation(){
+    genNum++;
+    console.log("calculate generation "+genNum);
+    var newPlayArea = [];
+    var xM = playArea.length;
+    var yM = playArea[0].length;
+
+    for(var x = 0; x < xM; x++){
+        var column = [];
+        for(var y = 0; y < yM; y++){
+            column.push(    cellLiveDie(x,y,playArea)   );
+        }
+        newPlayArea.push(column);
+    }
+    playArea = newPlayArea;
+
+    renderGeneration(xM,yM);
+}
+
+// display generation on screen using a bunch of janky ass divs
+function renderGeneration(xM,yM){
+    console.log("Render Generation "+genNum)
+    $( '#habitat' ).empty();
+    for(var x = 0; x < xM; x++){
+        for(var y = 0; y < yM; y++){
+            if(playArea[x][y] == 1){
+                placeLife(x,y,cellWidth);
+            }
+        }
+    }
+}
+
+function placeLife(x,y,width){
+    $( '#habitat' ).append( "<div id='cellx"+x+"y"+y+"' class='life' style='font-size:"+width+"px;width:"+width+"px;height:"+width+"px;border-radius:"+width/2+"px;left:"+(x*width)+";top:"+(y*width)+";'>"+kittyFace()+"</div>" );
+}
+
+function kittyFace(){
+    //return '🟢';
+    var id = Math.floor(Math.random()*5);
+    switch (id) {
+        case 1:
+            return '😼';
+        case 2:
+            return '😻';
+        case 3:
+            return '😸';
+        case 4: 
+            return '😹';
+        default:
+            return '🐱';
+    }
+}
+
+</script>
+
+<style>
+
+    body {
+        background-color: black;
+        color:green;
+        font-family:monospace;
+    }
+
+    .life {
+        /*background-color: green;*/
+        position:absolute;
+    }
+
+</style>
+
+
+</head>
+<body>
+    <div id="habitat"></div>
+</body>
+
+</html>
